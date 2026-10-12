@@ -1,0 +1,366 @@
+{
+  "schema_version": "2.0.0-PHYSICS-INVARIANTS",
+  "core_id": "HYGIEIA",
+  "core_folder": "AQUA-CORE_HYGIEIA",
+  "timestamp_snapshot_utc": "2026-10-12T04:01:32Z",
+  "autoridad_tecnica": {
+    "director_tecnico": "Kelvin Jesús Flores Yarihuaman",
+    "titulacion_oficial": "Máster Universitario en Ingeniería y Gestión Ambiental",
+    "nivel_marco_cualificaciones": "MECES Nivel 3 · EQF Level 7",
+    "habilitacion_forense": "Art. 335 Ley de Enjuiciamiento Civil (LEC)",
+    "afiliacion_institucional": "Yggdrasil Environmental Systems"
+  },
+  "blindaje_epistemico_y_gobernanza": {
+    "pilar_1": "Directiva DIR-YGG-2026-SEC01-AUTONOMY: Desacoplamiento total y zero-dependency en nube.",
+    "pilar_2": "Reglamento (UE) 2024/1689 (EU AI Act): Art. 14 Supervisión Humana Efectiva (HITL) y Art. 13 Trazabilidad.",
+    "pilar_3": "ISO/IEC 42001:2023 (AIMS): Evaluación continua de riesgos y no-alucinación algorítmica.",
+    "pilar_4": "ISO/IEC 27037: Cadena de custodia digital y sellado criptográfico SHA-256 inmutable.",
+    "pilar_5": "Política Zero-Smoke: Todo cálculo de IA está fundamentado en ecuaciones deterministas y papers seminales."
+  },
+  "perfil_modelado": {
+    "nombre_completo": "AQUA-CORE: HYGIEIA (Inteligencia Hidrosanitaria, Planes Sanitarios del Agua & Control de Legionella)",
+    "disciplina": "Calidad del Agua Potable, Cinética Química, Bioseguridad Hospitalaria & Balance Hídrico IWA",
+    "solvers_comparados": "EPANET 2.2, EPANET-MSX, WaterGEMS, InfoWater",
+    "ecuaciones_latex": "\\text{1. Advección & Decaimiento Cinético Bulk/Wall:} \\quad \\dfrac{\\partial C_i}{\\partial t} + u_i \\dfrac{\\partial C_i}{\\partial x} = - k_b C_i - \\dfrac{k_w}{r_H} (C_i - C_{w,i}) \\\\\n\\text{2. Inactivación de Patógenos (Chick-Watson):} \\quad \\ln\\left(\\dfrac{N}{N_0}\\right) = - \\Lambda_{\\text{CW}} C^n t \\implies \\text{Reducción Log} = \\dfrac{\\Lambda_{\\text{CW}} C t}{2.3026} \\\\\n\\text{3. Formación de Subproductos Trihalometanos:} \\quad \\text{TTHM} = 21.5 \\cdot (\\text{DOC})^{1.08} \\cdot (C_0)^{0.28} \\cdot (\\Delta\\text{pH})^{0.18} \\cdot f(T) \\cdot t^{0.32} \\le 100\\,\\mu\\text{g/L} \\\\\n\\text{4. Balance Hídrico IWA & Fugas Estructurales:} \\quad \\text{UARL} = (18 L_m + 0.80 N_c + 25 L_p) P \\quad ; \\quad \\text{ILI} = \\dfrac{\\text{CARL}}{\\text{UARL}}",
+    "arquitectura_ia": "Physics-Informed Graph Neural Network (PI-GNN) acoplada a topología EPANET + WNTR con verificación determinista.",
+    "benchmark_sota": "RMSE cloro libre < 0.024 mg/L | Detección de pérdidas reales con resolución horaria (ILI) | Cero falsos negativos de Legionella."
+  },
+  "invariantes_fisicas": [
+    {
+      "nombre": "Rango Normativo Legal de Cloro Libre Residual (RD 3/2023)",
+      "ecuacion": "0.20 <= C_cloro_mg_l <= 1.00",
+      "tolerancia_residual": 0.0,
+      "accion_si_viola": "FLAG_SANITARY_NON_COMPLIANCE"
+    },
+    {
+      "nombre": "Barrera Térmica Preventiva de Legionella (RD 487/2022)",
+      "ecuacion": "T_acumulador >= 60.0 °C  y  T_retorno_grifo >= 50.0 °C  y  T_fria <= 20.0 °C",
+      "tolerancia_residual": 0.0,
+      "accion_si_viola": "TRIGGER_THERMAL_DISINFECTION_ALERT"
+    },
+    {
+      "nombre": "Límite Máximo de Trihalometanos Totales (RD 3/2023)",
+      "ecuacion": "TTHM <= 100.0 µg/L",
+      "tolerancia_residual": 0.0,
+      "accion_si_viola": "CLAMP_DISINFECTION_BYPRODUCTS"
+    },
+    {
+      "nombre": "No Negatividad de Concentraciones Químicas y Caudales",
+      "ecuacion": "C(x, t) >= 0.0 mg/L  y  Q >= 0.0 L/s",
+      "tolerancia_residual": 0.0,
+      "accion_si_viola": "CLAMP_TO_ZERO"
+    },
+    {
+      "nombre": "Conservación de Soluto en Nudos de Mezcla",
+      "ecuacion": "C_nodo = (∑ Q_in * C_in) / (∑ Q_in)",
+      "tolerancia_residual": 0.01,
+      "accion_si_viola": "RECOMPUTE_MIXING_NODE"
+    }
+  ],
+  "parametros_clamping": {
+    "cloro_libre_residual_mgl": {
+      "min": 0.2,
+      "max": 1.0,
+      "unidad": "mg/L",
+      "accion": "WARN_SANITARY"
+    },
+    "turbidez_unf": {
+      "min": 0.0,
+      "max": 4.0,
+      "unidad": "UNF",
+      "accion": "CLAMP_MIN_ZERO"
+    },
+    "ph_agua": {
+      "min": 6.5,
+      "max": 9.5,
+      "unidad": "pH",
+      "accion": "CLAMP_RANGE"
+    },
+    "temperatura_acumulador_acs_c": {
+      "min": 60.0,
+      "max": 85.0,
+      "unidad": "°C",
+      "accion": "ENFORCE_THERMAL_BARRIER"
+    },
+    "temperatura_retorno_acs_c": {
+      "min": 50.0,
+      "max": 75.0,
+      "unidad": "°C",
+      "accion": "ENFORCE_RETURN_BARRIER"
+    },
+    "temperatura_afch_c": {
+      "min": 0.0,
+      "max": 20.0,
+      "unidad": "°C",
+      "accion": "CLAMP_COLD_WATER"
+    },
+    "tthm_ug_l": {
+      "min": 0.0,
+      "max": 100.0,
+      "unidad": "µg/L",
+      "accion": "CLAMP_TTHM_CEILING"
+    },
+    "ili_indice_fugas": {
+      "min": 1.0,
+      "max": 25.0,
+      "unidad": "adimensional",
+      "accion": "CLAMP_RANGE"
+    }
+  },
+  "respaldo_epistemico": {
+    "total_papers_boveda": 588,
+    "papers_seminales_seleccionados": [
+      {
+        "id": "EPI-ATH-0001",
+        "titulo": "PLANTILLA SGA",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/1. PLANTILLA SGA.docx",
+        "tamano_kb": 451.41,
+        "hash_sha256": "3a486e3486aa3960e86ec467df852aa8d1a9acbb1a6cdd7f0752c5f693958456"
+      },
+      {
+        "id": "EPI-ATH-0002",
+        "titulo": "1 Fuentes de contaminación del agua y tipos de contaminantes",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/1_Fuentes de contaminación del agua y tipos de contaminantes/1.1_Fuentes de contaminación del agua y tipos de contaminantes.pptx",
+        "tamano_kb": 13454.66,
+        "hash_sha256": "5c05fa8775187eddf56af0f9e0d25acfd2f5e58092d9bfba8d50c8e003901c27"
+      },
+      {
+        "id": "EPI-ATH-0003",
+        "titulo": "2 Fuentes de contaminación del agua y tipos de contaminantes",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/1_Fuentes de contaminación del agua y tipos de contaminantes/1.2_Fuentes de contaminación del agua y tipos de contaminantes.pptx",
+        "tamano_kb": 11062.0,
+        "hash_sha256": "7895d430004bcab2a451397aed6e60bf31a49d49253139d0de58fb7e10c1cf09"
+      },
+      {
+        "id": "EPI-ATH-0004",
+        "titulo": "3 Fuentes de contaminación del agua y tipos de contaminantes",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/1_Fuentes de contaminación del agua y tipos de contaminantes/1.3_Fuentes de contaminación del agua y tipos de contaminantes.pptx",
+        "tamano_kb": 11128.83,
+        "hash_sha256": "a825a1863177fa3e38c15f1413069411c1ff487ae67cacabd678a72eb21c9ce3"
+      },
+      {
+        "id": "EPI-ATH-0005",
+        "titulo": "Sesion 02MGES 05",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/2_Difusión de contaminantes en fluidos/Sesion_02MGES_05.pptx",
+        "tamano_kb": 3643.52,
+        "hash_sha256": "35447ff3854e71fc5a6a85141485a73d2061fa309004c362a83518ca07e47477"
+      },
+      {
+        "id": "EPI-ATH-0006",
+        "titulo": "Sesion 02MGES 06",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/2_Difusión de contaminantes en fluidos/Sesion_02MGES_06.pptx",
+        "tamano_kb": 6546.85,
+        "hash_sha256": "b0484d5d082c6a0da037966d6d839786fa133103b169d49537cd3a9fccb82351"
+      },
+      {
+        "id": "EPI-ATH-0007",
+        "titulo": "Sesion 02MGES 07",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/2_Difusión de contaminantes en fluidos/Sesion_02MGES_07.pptx",
+        "tamano_kb": 2223.18,
+        "hash_sha256": "f172a1bb029bf5202cc6cc3e1c3168d8b3ff2225f01d130d654aeef8aa48d448"
+      },
+      {
+        "id": "EPI-ATH-0008",
+        "titulo": "Sesion 02MGES 08",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/3_Técnicas de tratamiento de aguas contaminadas/Sesion_02MGES_08.pptx",
+        "tamano_kb": 6208.09,
+        "hash_sha256": "5c1fca733c99f00b768d510755de75d0564be62023519877e39d120aa0fcfe4b"
+      },
+      {
+        "id": "EPI-ATH-0009",
+        "titulo": "Sesion 02MGES 09",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/3_Técnicas de tratamiento de aguas contaminadas/Sesion_02MGES_09.pptx",
+        "tamano_kb": 3465.29,
+        "hash_sha256": "f536dfbac63168b5161ed3b0f49bb99b83a98c886f6d2c0bc311a44fe2ebc79e"
+      },
+      {
+        "id": "EPI-ATH-0010",
+        "titulo": "Sesion 02MGES 10",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/3_Técnicas de tratamiento de aguas contaminadas/Sesion_02MGES_10.pptx",
+        "tamano_kb": 5033.52,
+        "hash_sha256": "6d79a17292c72c024397dc6e03bb81c36307895b307b90514ab872ddd37e33fa"
+      },
+      {
+        "id": "EPI-ATH-0011",
+        "titulo": "Sesion 02MGES 11",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/3_Técnicas de tratamiento de aguas contaminadas/Sesion_02MGES_11.pptx",
+        "tamano_kb": 2701.73,
+        "hash_sha256": "6e5ed8609fb2ca71acd7b20b3c434dcaa21885ccecb04566589d4306a2f90a2e"
+      },
+      {
+        "id": "EPI-ATH-0012",
+        "titulo": "Sesion 02MGES 12",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/3_Técnicas de tratamiento de aguas contaminadas/Sesion_02MGES_12.pptx",
+        "tamano_kb": 3756.25,
+        "hash_sha256": "174594563458b0f5b11cc4c0043f697b5a8bd0b20d02979917bf4e893218d48a"
+      },
+      {
+        "id": "EPI-ATH-0013",
+        "titulo": "Sesion 02MGES 13",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/4_Tratamientos innovadores/Sesion_02MGES_13.pptx",
+        "tamano_kb": 2520.94,
+        "hash_sha256": "03e870d816e67c161cf84b425d2dbdb90b37a590e972543b422b6caaf04f59cf"
+      },
+      {
+        "id": "EPI-ATH-0014",
+        "titulo": "Sesion 02MGES 14",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/4_Tratamientos innovadores/Sesion_02MGES_14.pptx",
+        "tamano_kb": 2273.13,
+        "hash_sha256": "baf38eeb05989d1c7a8610ef40827abe3056fd7378e4ee6224b42126e40bd7d8"
+      },
+      {
+        "id": "EPI-ATH-0015",
+        "titulo": "Sesion 02MGES 15",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/5_Funcionamiento de instalaciones de tratamiento de aguas/Sesion_02MGES_15.pptx",
+        "tamano_kb": 6402.89,
+        "hash_sha256": "28fb38bd0d117b1c8c4a8cae24079463d57bec640abc9818f300d6ffa11ade2d"
+      },
+      {
+        "id": "EPI-ATH-0016",
+        "titulo": "Sesion 02MGES 16",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/5_Funcionamiento de instalaciones de tratamiento de aguas/Sesion_02MGES_16.pptx",
+        "tamano_kb": 5711.92,
+        "hash_sha256": "b1f5e668e7fb9315802747ba75bf297ef66d27ec74e4c7c3c5a57405c81efa5e"
+      },
+      {
+        "id": "EPI-ATH-0017",
+        "titulo": "ACTIVIDAD 1 RESIDUOS VIU",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/ACTIVIDAD/ACTIVIDAD 1_RESIDUOS_VIU.pptx",
+        "tamano_kb": 8345.7,
+        "hash_sha256": "84925da511f4c6e76286261bd4016ad97db07132c28418942b7e193169f1c002"
+      },
+      {
+        "id": "EPI-ATH-0018",
+        "titulo": "KIKE ANDRES CARLOS KELVIN ACT 2 GRUPO17 RRSS 2024 AKCE (3) (1)",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PPTX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/ACTIVIDAD/KIKE-ANDRES-CARLOS-KELVIN-ACT 2-GRUPO17-RRSS-2024-AKCE (3) (1).pptx",
+        "tamano_kb": 5876.76,
+        "hash_sha256": "38192630583c1403b7951291710c3acaae9cdc4b6d275eca607eabdb17ff0ecd"
+      },
+      {
+        "id": "EPI-ATH-0019",
+        "titulo": "Actividad 2 Análisis del Ciclo de Vida GRUPO 7",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/Actividad 2 - Análisis del Ciclo de Vida_GRUPO 7.docx",
+        "tamano_kb": 6328.31,
+        "hash_sha256": "6a6776e276e89e457148f39d633e8eeb5a3cee793059765181cf72f3dd6af901"
+      },
+      {
+        "id": "EPI-ATH-0020",
+        "titulo": "Actividad 2 Grupo 7",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/Actividad 2_Grupo 7.docx",
+        "tamano_kb": 792.86,
+        "hash_sha256": "4f3c3f1ff1a4bd3f8d6377f167c96c41079b710644783582ca4f4346942dadff"
+      },
+      {
+        "id": "EPI-ATH-0021",
+        "titulo": "Análisis de la Calidad del Aire en Madrid VIU KJFY",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/Análisis de la Calidad del Aire en Madrid_VIU_KJFY.docx",
+        "tamano_kb": 826.51,
+        "hash_sha256": "c36d09c1ef3fdd165c3466b0779a351c544f4538593be041cf057cbe42667ffe"
+      },
+      {
+        "id": "EPI-ATH-0022",
+        "titulo": "Autoevaluación Kelvin Flores",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/Autoevaluación_Kelvin Flores.docx",
+        "tamano_kb": 1448.71,
+        "hash_sha256": "5637b59032799699115fb5e223cd3ec53f1834310c5076d7d7953fd557f5ab77"
+      },
+      {
+        "id": "EPI-ATH-0023",
+        "titulo": "Borrador TFM Kelvin Flores",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/Borrador TFM_Kelvin Flores.docx",
+        "tamano_kb": 702.45,
+        "hash_sha256": "6174dd9366321800544fb2360575d58be058ff3ef56a7b077de7c3ad5cdc10a6"
+      },
+      {
+        "id": "EPI-ATH-0024",
+        "titulo": "check list aduditorias ambientales",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "DOCX",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/check list aduditorias ambientales.docx",
+        "tamano_kb": 44.51,
+        "hash_sha256": "11e850d2ef3f8f8611cf07082f6d691f5d2a5977f8d576c3ab3e82ef3b6a73d9"
+      },
+      {
+        "id": "EPI-ATH-0025",
+        "titulo": "01MGES Presentació Inicial",
+        "disciplina": "Docencia Máster VIU / EIA / GIS",
+        "formato": "PDF",
+        "referencia": "REF_LOCAL_INTERNA",
+        "ruta_boveda": "00_clases_y_presentaciones_master_viu/Contaminación atmosférica y gestión de la calidad del aire/01MGES_Presentació Inicial.pdf",
+        "tamano_kb": 562.51,
+        "hash_sha256": "a4a3bd6932d6367b34eb85fbd704181f6516855c5f12f92a028e891d4d88e101"
+      }
+    ]
+  },
+  "sello_criptografico_sha256": "SHA256:cbaa5e57b57dd4e865f812e710d202a3f19760c3a52eb137a7d0e22a349e1540"
+}
